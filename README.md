@@ -1,6 +1,6 @@
-# @dockcodes/dock-thor-next
+# @dockcodes/dock-ray-next
 
-Next.js integration for [DockTHOR](https://dock.codes). Reports server errors,
+Next.js integration for [DockRay](https://dockray.io). Reports server errors,
 edge and middleware errors, request timings and — optionally — JavaScript
 errors from the browser.
 
@@ -9,17 +9,16 @@ Works with the App Router and the Pages Router, Next 14 and 15.
 ## Installation
 
 ```bash
-npm install @dockcodes/dock-thor-next
+npm install @dockcodes/dock-ray-next
 ```
 
 ```dotenv
-THOR_TOKEN=project-token
-THOR_PRIVATE_KEY=project-private-key
-THOR_URL=https://thor.dock.codes
-THOR_TRACES_SAMPLE_RATE=0.2
+RAY_TOKEN=project-token
+RAY_PRIVATE_KEY=project-private-key
+RAY_TRACES_SAMPLE_RATE=0.2
 ```
 
-`THOR_PRIVATE_KEY` has no `NEXT_PUBLIC_` prefix, and must never get one: a
+`RAY_PRIVATE_KEY` has no `NEXT_PUBLIC_` prefix, and must never get one: a
 public environment variable is inlined into the client bundle, where anyone can
 read it. Without a token and a key the package is inert — no requests, no
 errors.
@@ -29,13 +28,13 @@ errors.
 `instrumentation.ts` in the project root:
 
 ```ts
-import { initThor, thorRequestError } from '@dockcodes/dock-thor-next';
+import { initRay, rayRequestError } from '@dockcodes/dock-ray-next';
 
 export function register() {
-    initThor();
+    initRay();
 }
 
-export const onRequestError = thorRequestError();
+export const onRequestError = rayRequestError();
 ```
 
 `onRequestError` is the only hook that sees every error Next catches — server
@@ -49,12 +48,12 @@ pattern rather than the concrete path), `route_type` and `render_source`.
 For Pages Router API routes, or anywhere you want an explicit wrapper:
 
 ```ts
-import { withThor } from '@dockcodes/dock-thor-next';
+import { withRay } from '@dockcodes/dock-ray-next';
 
-export default withThor(async function handler(req, res) { /* ... */ });
+export default withRay(async function handler(req, res) { /* ... */ });
 ```
 
-`withThor` reports and rethrows. It never swallows an error, so your own error
+`withRay` reports and rethrows. It never swallows an error, so your own error
 handling still runs.
 
 ## Middleware and edge routes
@@ -63,11 +62,11 @@ Middleware is always an edge bundle, and an edge bundle cannot resolve
 `node:fs` or `node:zlib`. Import the edge entry point there:
 
 ```ts
-import { initThor, withThorMiddleware } from '@dockcodes/dock-thor-next/edge';
+import { initRay, withRayMiddleware } from '@dockcodes/dock-ray-next/edge';
 
-initThor();
+initRay();
 
-export const middleware = withThorMiddleware(async (request) => {
+export const middleware = withRayMiddleware(async (request) => {
     // ...
 });
 ```
@@ -76,17 +75,17 @@ Events lose stack source context and gzip; everything else is the same. The
 edge wrapper **awaits** its report rather than firing and forgetting, because
 an edge invocation can be frozen the moment it returns.
 
-`instrumentation-edge.ts` should use `thorRequestError` from the same entry
+`instrumentation-edge.ts` should use `rayRequestError` from the same entry
 point.
 
 ## JavaScript errors
 
 Off by default. Two things are needed.
 
-**The route that receives them** — `app/api/thor/browser/route.ts`:
+**The route that receives them** — `app/api/ray/browser/route.ts`:
 
 ```ts
-import { createBrowserErrorRoute } from '@dockcodes/dock-thor-next';
+import { createBrowserErrorRoute } from '@dockcodes/dock-ray-next';
 
 export const POST = createBrowserErrorRoute();
 export const runtime = 'nodejs';
@@ -95,13 +94,13 @@ export const runtime = 'nodejs';
 **The collector**, mounted once in the root layout:
 
 ```tsx
-import { ThorBrowserReporting } from '@dockcodes/dock-thor-next/client';
+import { RayBrowserReporting } from '@dockcodes/dock-ray-next/client';
 
 export default function RootLayout({ children }) {
     return (
         <html>
             <body>
-                <ThorBrowserReporting />
+                <RayBrowserReporting />
                 {children}
             </body>
         </html>
@@ -110,7 +109,7 @@ export default function RootLayout({ children }) {
 ```
 
 ```dotenv
-NEXT_PUBLIC_THOR_JS_ERRORS=true
+NEXT_PUBLIC_RAY_JS_ERRORS=true
 ```
 
 The browser reports to **your route**, not to the panel. It cannot report
@@ -132,7 +131,7 @@ From an error boundary or `app/global-error.tsx`:
 
 ```tsx
 'use client';
-import { captureBrowserException } from '@dockcodes/dock-thor-next/client';
+import { captureBrowserException } from '@dockcodes/dock-ray-next/client';
 
 export default function GlobalError({ error }) {
     captureBrowserException(error);
@@ -145,13 +144,13 @@ export default function GlobalError({ error }) {
 
 `Authorization`, `Cookie`, `Set-Cookie`, `X-Api-Key` and the collector's own
 token are stripped from reported headers. The visitor's IP address and user
-agent are only attached when `THOR_SEND_DEFAULT_PII=true`; without it a report
+agent are only attached when `RAY_SEND_DEFAULT_PII=true`; without it a report
 carries no `user` at all.
 
 ## Vercel
 
 `VERCEL_ENV` becomes the environment and `VERCEL_GIT_COMMIT_SHA` the release
-when `THOR_ENVIRONMENT` and `THOR_RELEASE` are not set, so a preview deployment
+when `RAY_ENVIRONMENT` and `RAY_RELEASE` are not set, so a preview deployment
 does not report as production.
 
 ## Tests

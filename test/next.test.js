@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import test from 'node:test';
 
-import { createBrowserErrorHandler, initThor, thorRequestError, withThor } from '../src/index.js';
-import { initThor as initEdgeThor, withThorMiddleware } from '../src/edge.js';
+import { createBrowserErrorHandler, initRay, rayRequestError, withRay } from '../src/index.js';
+import { initRay as initEdgeRay, withRayMiddleware } from '../src/edge.js';
 
 async function withPanel(run) {
     const received = [];
@@ -52,16 +52,16 @@ test('the edge entry point pulls in no node built-ins', () => {
         const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 
         assert.deepEqual([...source.matchAll(/from '(node:[^']+)'/g)], [], `${file} imports a node built-in`);
-        assert.equal(source.includes("from '@dockcodes/dock-thor'"), false,
+        assert.equal(source.includes("from '@dockcodes/dock-ray'"), false,
             `${file} must import the edge entry, not the node one`);
     }
 });
 
 test('onRequestError reports with the route context as tags', async () => {
     await withPanel(async (url, received) => {
-        initThor({ token: 'tok', privateKey: 'key', url, environment: 'production' });
+        initRay({ token: 'tok', privateKey: 'key', url, environment: 'production' });
 
-        const handler = thorRequestError();
+        const handler = rayRequestError();
 
         await handler(new TypeError('boom'), request(), {
             routerKind: 'App Router',
@@ -83,24 +83,24 @@ test('onRequestError reports with the route context as tags', async () => {
 
 test('the visitor address is reported only when sendDefaultPii is on', async () => {
     await withPanel(async (url, received) => {
-        initThor({ token: 'tok', privateKey: 'key', url, sendDefaultPii: true });
+        initRay({ token: 'tok', privateKey: 'key', url, sendDefaultPii: true });
 
-        await thorRequestError()(new Error('boom'), request(), {});
+        await rayRequestError()(new Error('boom'), request(), {});
 
         assert.equal(received[0].user.ip_address, '203.0.113.7', 'the proxy header wins over the socket');
         assert.equal(received[0].user.agent, 'Firefox/130');
     });
 });
 
-test('withThor reports and rethrows, never swallows', async () => {
+test('withRay reports and rethrows, never swallows', async () => {
     await withPanel(async (url, received) => {
-        const thor = initThor({ token: 'tok', privateKey: 'key', url });
-        const handler = withThor(async () => {
+        const ray = initRay({ token: 'tok', privateKey: 'key', url });
+        const handler = withRay(async () => {
             throw new Error('route blew up');
         });
 
         await assert.rejects(() => handler(request()), /route blew up/);
-        await thor.flush();
+        await ray.flush();
 
         assert.equal(received[0].exception.values[0].value, 'route blew up');
     });
@@ -108,9 +108,9 @@ test('withThor reports and rethrows, never swallows', async () => {
 
 test('edge middleware awaits its report before the error bubbles', async () => {
     await withPanel(async (url, received) => {
-        initEdgeThor({ token: 'tok', privateKey: 'key', url });
+        initEdgeRay({ token: 'tok', privateKey: 'key', url });
 
-        const middleware = withThorMiddleware(async () => {
+        const middleware = withRayMiddleware(async () => {
             throw new Error('middleware blew up');
         });
 
@@ -124,39 +124,39 @@ test('edge middleware awaits its report before the error bubbles', async () => {
 
 test('the browser route forwards a report and always answers 202', async () => {
     await withPanel(async (url, received) => {
-        const thor = initThor({ token: 'tok', privateKey: 'key', url, environment: 'production' });
-        const handle = createBrowserErrorHandler(() => thor);
+        const ray = initRay({ token: 'tok', privateKey: 'key', url, environment: 'production' });
+        const handle = createBrowserErrorHandler(() => ray);
 
-        const good = await handle(new Request('https://shop.test/api/thor/browser', {
+        const good = await handle(new Request('https://shop.test/api/ray/browser', {
             method: 'POST',
             headers: { referer: 'https://shop.test/cart', 'user-agent': 'Firefox/130' },
             body: JSON.stringify({ type: 'TypeError', message: 'null is not an object', url: 'https://shop.test/cart' }),
         }));
 
         assert.equal(good.status, 202);
-        await thor.flush();
+        await ray.flush();
 
         assert.equal(received[0].platform, 'javascript');
         assert.equal(received[0].tags.source, 'browser');
         assert.equal(received[0].environment, 'production');
 
-        const junk = await handle(new Request('https://shop.test/api/thor/browser', {
+        const junk = await handle(new Request('https://shop.test/api/ray/browser', {
             method: 'POST',
             body: 'not json',
         }));
 
         assert.equal(junk.status, 202, 'a bad payload looks exactly like a good one');
-        await thor.flush();
+        await ray.flush();
         assert.equal(received.length, 1);
     });
 });
 
 test('the browser route drops oversized bodies and rate limits an address', async () => {
     await withPanel(async (url, received) => {
-        const thor = initThor({ token: 'tok', privateKey: 'key', url });
-        const handle = createBrowserErrorHandler(() => thor, { rateLimit: 3 });
+        const ray = initRay({ token: 'tok', privateKey: 'key', url });
+        const handle = createBrowserErrorHandler(() => ray, { rateLimit: 3 });
 
-        const post = (body, address = '203.0.113.9') => handle(new Request('https://shop.test/api/thor/browser', {
+        const post = (body, address = '203.0.113.9') => handle(new Request('https://shop.test/api/ray/browser', {
             method: 'POST',
             headers: { 'x-forwarded-for': address },
             body,
@@ -165,14 +165,14 @@ test('the browser route drops oversized bodies and rate limits an address', asyn
         const huge = await post(JSON.stringify({ message: 'x'.repeat(20000) }));
 
         assert.equal(huge.status, 202);
-        await thor.flush();
+        await ray.flush();
         assert.equal(received.length, 0, 'a 20 KB report never reaches the panel');
 
         for (let i = 0; i < 6; i += 1) {
             await post(JSON.stringify({ message: `error ${i}` }));
         }
 
-        await thor.flush();
+        await ray.flush();
         assert.equal(received.length, 3, 'the fourth report from one address onwards is dropped');
     });
 });

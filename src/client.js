@@ -1,6 +1,6 @@
 'use client';
 
-import { startCollector, collectorConfig } from '@dockcodes/dock-thor/browser';
+import { startCollector, collectorConfig } from '@dockcodes/dock-ray/browser';
 import { browserOptionsFromEnvironment } from './shared.js';
 
 let stop = null;
@@ -8,7 +8,7 @@ let stop = null;
 /**
  * Starts browser error collection.
  *
- * Off unless `NEXT_PUBLIC_THOR_JS_ERRORS` is `true`, because the collector is
+ * Off unless `NEXT_PUBLIC_RAY_JS_ERRORS` is `true`, because the collector is
  * a decision about visitors' pages, not a default. Errors go to your own
  * route, which forwards them with the project key — a browser cannot hold that
  * key without publishing it.
@@ -16,9 +16,9 @@ let stop = null;
  * Mount it once, in the root layout:
  *
  *     'use client';
- *     import { ThorBrowserReporting } from '@dockcodes/dock-thor-next/client';
+ *     import { RayBrowserReporting } from '@dockcodes/dock-ray-next/client';
  */
-export function startThorBrowserReporting(overrides = {}) {
+export function startRayBrowserReporting(overrides = {}) {
     const options = browserOptionsFromEnvironment(overrides);
 
     if (!options.enabled || typeof window === 'undefined') {
@@ -40,9 +40,9 @@ export function startThorBrowserReporting(overrides = {}) {
  * A component for the root layout. It renders nothing and only sets the
  * listeners up.
  */
-export function ThorBrowserReporting(props = {}) {
+export function RayBrowserReporting(props = {}) {
     if (typeof window !== 'undefined' && !stop) {
-        startThorBrowserReporting(props);
+        startRayBrowserReporting(props);
     }
 
     return null;
@@ -59,12 +59,12 @@ export function captureBrowserException(error, overrides = {}) {
         return;
     }
 
-    if (window.DockThor) {
-        window.DockThor.captureException(error);
+    if (window.DockRay) {
+        window.DockRay.captureException(error);
 
         return;
     }
 
-    startThorBrowserReporting(overrides);
-    window.DockThor?.captureException(error);
+    startRayBrowserReporting(overrides);
+    window.DockRay?.captureException(error);
 }

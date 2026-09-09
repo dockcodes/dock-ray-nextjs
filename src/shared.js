@@ -10,14 +10,14 @@ export function optionsFromEnvironment(overrides = {}) {
     const env = globalThis.process?.env ?? {};
 
     return {
-        token: env.THOR_TOKEN,
-        privateKey: env.THOR_PRIVATE_KEY,
-        url: env.THOR_URL,
-        environment: env.THOR_ENVIRONMENT ?? env.VERCEL_ENV ?? env.NODE_ENV,
-        release: env.THOR_RELEASE ?? env.VERCEL_GIT_COMMIT_SHA,
-        tracesSampleRate: number(env.THOR_TRACES_SAMPLE_RATE, 0),
-        sampleRate: number(env.THOR_SAMPLE_RATE, 1),
-        sendDefaultPii: env.THOR_SEND_DEFAULT_PII === 'true',
+        token: env.RAY_TOKEN,
+        privateKey: env.RAY_PRIVATE_KEY,
+        url: env.RAY_URL,
+        environment: env.RAY_ENVIRONMENT ?? env.VERCEL_ENV ?? env.NODE_ENV,
+        release: env.RAY_RELEASE ?? env.VERCEL_GIT_COMMIT_SHA,
+        tracesSampleRate: number(env.RAY_TRACES_SAMPLE_RATE, 0),
+        sampleRate: number(env.RAY_SAMPLE_RATE, 1),
+        sendDefaultPii: env.RAY_SEND_DEFAULT_PII === 'true',
         ...overrides,
     };
 }
@@ -26,10 +26,10 @@ export function browserOptionsFromEnvironment(overrides = {}) {
     const env = globalThis.process?.env ?? {};
 
     return {
-        enabled: env.NEXT_PUBLIC_THOR_JS_ERRORS === 'true',
-        endpoint: env.NEXT_PUBLIC_THOR_JS_ENDPOINT ?? '/api/thor/browser',
-        release: env.NEXT_PUBLIC_THOR_RELEASE,
-        sampleRate: number(env.NEXT_PUBLIC_THOR_JS_SAMPLE_RATE, 1),
+        enabled: env.NEXT_PUBLIC_RAY_JS_ERRORS === 'true',
+        endpoint: env.NEXT_PUBLIC_RAY_JS_ENDPOINT ?? '/api/ray/browser',
+        release: env.NEXT_PUBLIC_RAY_RELEASE,
+        sampleRate: number(env.NEXT_PUBLIC_RAY_JS_SAMPLE_RATE, 1),
         ...overrides,
     };
 }
@@ -76,7 +76,7 @@ export function describeNextRequest(request) {
     };
 }
 
-const SENSITIVE = new Set(['authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-dockthor-token']);
+const SENSITIVE = new Set(['authorization', 'cookie', 'set-cookie', 'x-api-key', 'x-dockray-token']);
 
 function normaliseHeaders(headers) {
     if (!headers) {

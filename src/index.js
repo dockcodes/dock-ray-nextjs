@@ -1,4 +1,4 @@
-import { DockThorClient, browserEvent } from '@dockcodes/dock-thor';
+import { DockRayClient, browserEvent } from '@dockcodes/dock-ray';
 import { createBrowserErrorHandler } from './browser-route.js';
 import { describeNextRequest, optionsFromEnvironment, tagsFromContext } from './shared.js';
 
@@ -11,14 +11,14 @@ let client = null;
  * Builds the server client. Call it from `register()` in `instrumentation.ts`,
  * which Next runs once per server bundle before anything is handled.
  */
-export function initThor(options = {}) {
-    client = new DockThorClient(optionsFromEnvironment(options));
+export function initRay(options = {}) {
+    client = new DockRayClient(optionsFromEnvironment(options));
 
     return client;
 }
 
-export function getThor() {
-    return client ?? initThor();
+export function getRay() {
+    return client ?? initRay();
 }
 
 /**
@@ -28,19 +28,19 @@ export function getThor() {
  * handlers, server actions — and this is the only hook that sees all of them.
  * It runs after the response has failed, so the report never delays a request.
  *
- *     export const onRequestError = thorRequestError();
+ *     export const onRequestError = rayRequestError();
  */
-export function thorRequestError({ shouldReport = () => true } = {}) {
+export function rayRequestError({ shouldReport = () => true } = {}) {
     return async function onRequestError(error, request, context) {
-        const thor = getThor();
+        const ray = getRay();
 
-        if (!thor.enabled || !shouldReport(error, context)) {
+        if (!ray.enabled || !shouldReport(error, context)) {
             return;
         }
 
         const described = describeNextRequest(request);
 
-        await thor.captureException(error, {
+        await ray.captureException(error, {
             request: described.http,
             user: described.user,
             tags: tagsFromContext(context),
@@ -54,17 +54,17 @@ export function thorRequestError({ shouldReport = () => true } = {}) {
  * `onRequestError` already covers App Router handlers; this is for Pages
  * Router API routes and for anywhere you want the error tagged as yours.
  */
-export function withThor(handler, { tags = {} } = {}) {
-    return async function thorWrappedHandler(...args) {
+export function withRay(handler, { tags = {} } = {}) {
+    return async function rayWrappedHandler(...args) {
         try {
             return await handler(...args);
         } catch (error) {
-            const thor = getThor();
+            const ray = getRay();
 
-            if (thor.enabled) {
+            if (ray.enabled) {
                 const described = describeNextRequest(args[0]);
 
-                thor.report(thor.captureException(error, {
+                ray.report(ray.captureException(error, {
                     request: described.http,
                     user: described.user,
                     tags,
@@ -80,13 +80,13 @@ export function withThor(handler, { tags = {} } = {}) {
  * The route that receives JavaScript errors from the browser.
  *
  * A browser cannot hold the project private key, so the page reports here and
- * the server forwards. Mount it at `app/api/thor/browser/route.js`:
+ * the server forwards. Mount it at `app/api/ray/browser/route.js`:
  *
  *     export const POST = createBrowserErrorRoute();
  *     export const runtime = 'nodejs';
  */
 export function createBrowserErrorRoute(options = {}) {
-    return createBrowserErrorHandler(getThor, options);
+    return createBrowserErrorHandler(getRay, options);
 }
 
 export { createBrowserErrorHandler } from './browser-route.js';

@@ -13,9 +13,9 @@ export function createBrowserErrorHandler(resolveClient, { rateLimit = 20, windo
     return async function handleBrowserError(request) {
         // One answer for every outcome: a caller learns nothing about the guards.
         const accepted = Response.json({ success: true }, { status: 202 });
-        const thor = resolveClient();
+        const ray = resolveClient();
 
-        if (!thor.enabled) {
+        if (!ray.enabled) {
             return accepted;
         }
 
@@ -37,7 +37,7 @@ export function createBrowserErrorHandler(resolveClient, { rateLimit = 20, windo
             return accepted;
         }
 
-        thor.report(thor.captureBrowserReport(payload, {
+        ray.report(ray.captureBrowserReport(payload, {
             pageUrl: request.headers.get('referer'),
             userAgent: request.headers.get('user-agent'),
         }));

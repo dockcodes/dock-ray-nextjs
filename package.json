@@ -1,13 +1,13 @@
 {
-  "name": "@dockcodes/dock-thor-next",
+  "name": "@dockcodes/dock-ray-next",
   "version": "1.0.0",
-  "description": "Next.js integration for DockTHOR error and performance monitoring",
+  "description": "Next.js integration for DockRay error and performance monitoring",
   "license": "MIT",
   "author": "Jacek Sultan <j.sultan@dock.codes>",
-  "homepage": "https://dock.codes",
+  "homepage": "https://dockray.io",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dockcodes/dock-thor-next.git"
+    "url": "git+https://github.com/dockcodes/dock-ray-next.git"
   },
   "keywords": [
     "nextjs",
@@ -43,6 +43,6 @@
     }
   },
   "dependencies": {
-    "@dockcodes/dock-thor": "^1.0.0"
+    "@dockcodes/dock-ray": "^1.0.0"
   }
 }
