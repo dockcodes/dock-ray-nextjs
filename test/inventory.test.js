@@ -9,7 +9,7 @@ import { initRay as initEdgeRay, optionsFromEnvironment as edgeOptions } from '.
 import { browserOptionsFromEnvironment } from '../src/shared.js';
 
 test('inventory environment is opt-in, server-only and options take precedence', t => {
-    const settings = { RAY_INVENTORY: 'true', RAY_INVENTORY_SITE_URL: 'https://site.example',
+    const settings = { RAY_INVENTORY: 'true', RAY_ENVIRONMENT: 'development',
         RAY_INVENTORY_EXCLUDE_PACKAGES: ' @company/*, ,private-pkg ' };
     const previous = Object.fromEntries(Object.keys(settings).map(key => [key, process.env[key]]));
     Object.assign(process.env, settings);
@@ -17,7 +17,8 @@ test('inventory environment is opt-in, server-only and options take precedence',
         if (value === undefined) delete process.env[key]; else process.env[key] = value;
     } });
     assert.equal(optionsFromEnvironment().inventoryEnabled, true);
-    assert.equal(optionsFromEnvironment().inventorySiteUrl, 'https://site.example');
+    assert.equal(optionsFromEnvironment().environment, 'development');
+    assert.equal(Object.hasOwn(optionsFromEnvironment(), 'inventorySiteUrl'), false);
     assert.deepEqual(optionsFromEnvironment().inventoryExcludePackages, ['@company/*', 'private-pkg']);
     assert.equal(optionsFromEnvironment({ inventoryEnabled: false }).inventoryEnabled, false);
     assert.equal(edgeOptions().inventoryEnabled, undefined);
@@ -55,13 +56,15 @@ test('Next reports actual npm inventory through SDK with shared throttling', asy
         return new Response('{"success":true,"vulnerable":1,"next_report_in":43200}');
     });
     const ray = initRay({ token: 'project', privateKey: 'private-key', inventoryEnabled: true,
-        inventorySiteUrl: 'https://site.example', inventoryProjectDirectory: root,
+        environment: 'preview', inventoryProjectDirectory: root,
         inventoryStateDirectory: join(root, 'state') });
     t.after(() => ray.close());
     assert.equal((await reportInventory()).status, 'sent');
     assert.equal(requests.length, 1);
     const payload = JSON.parse(requests[0].request.body);
     assert.equal(payload.platform, 'nodejs');
+    assert.equal(payload.environment, 'dev');
+    assert.equal(Object.hasOwn(payload, 'site_url'), false);
     assert.equal(payload.components[0].slug, 'next@15.0.0');
     assert.equal(requests[0].request.headers.Authorization, 'Bearer private-key');
     assert.equal(requests[0].request.redirect, 'error');

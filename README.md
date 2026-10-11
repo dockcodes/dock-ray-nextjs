@@ -170,13 +170,13 @@ does not report as production.
 
 ## Package inventory and vulnerability alerts
 
-Version 1.1 requires `@dockcodes/dock-ray` 1.1+. Inventory is opt-in and
+Version 1.1.2 requires `@dockcodes/dock-ray` 1.1.1+. Inventory is opt-in and
 runs only in the Node server, never in the browser or Edge runtime.
 With the `register()` example above, set these server-only variables:
 
 ```dotenv
 RAY_INVENTORY=true
-RAY_INVENTORY_SITE_URL=https://your-site.example
+RAY_ENVIRONMENT=production
 # Optional comma-separated names or globs:
 RAY_INVENTORY_EXCLUDE_PACKAGES=@company/*
 # Optional paths (defaults: application root and private temporary state):
@@ -184,7 +184,7 @@ RAY_INVENTORY_EXCLUDE_PACKAGES=@company/*
 # RAY_INVENTORY_STATE_DIR=/var/lib/dockray/inventory
 ```
 
-Alternatively pass `inventoryEnabled: true`, `inventorySiteUrl`,
+Alternatively pass `inventoryEnabled: true`, `environment`,
 `inventoryExcludePackages`, `inventoryProjectDirectory` and
 `inventoryStateDirectory` to `initRay()` inside the Node branch.
 Use a separate state directory for each application, outside public assets.
@@ -192,10 +192,19 @@ Never prefix these settings or credentials with `NEXT_PUBLIC_`.
 
 The Node SDK collects installed production npm packages using package-lock.json
 or npm-shrinkwrap.json v2/v3. This includes Next.js and React when installed as
-production dependencies. Only the site URL and package names/versions are sent;
+production dependencies. Only the normalized environment, runtime/SDK versions and package names/versions are sent;
 source code, environment files and credentials are not included in inventory.
 DockRay matches these reports against known npm vulnerabilities and uses the
 project's existing notification settings. The platform in the panel is Node.js.
+
+No site URL is required or sent. Remove obsolete `RAY_INVENTORY_SITE_URL` and
+`inventorySiteUrl` settings. The existing environment setting also selects the
+inventory environment: `RAY_ENVIRONMENT`, then `VERCEL_ENV`, then `NODE_ENV`,
+with production as the final default. `prod`/`production` become `prod`;
+`dev`/`development`/`staging`/`preview`/`test`/`local` become `dev`.
+Unknown values fail without sending. Development requires a configured development
+environment in DockRay. Production and development use separate inventory state.
+Deploy the DockRay API with explicit environment support before upgrading.
 
 The SDK starts a background check after initialization and checks hourly.
 Changed inventory is sent on the next check; unchanged inventory is refreshed

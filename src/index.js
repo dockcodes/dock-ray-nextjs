@@ -10,7 +10,6 @@ export function optionsFromEnvironment(overrides = {}) {
     const env = process.env;
     return baseOptionsFromEnvironment({
         inventoryEnabled: env.RAY_INVENTORY === 'true',
-        inventorySiteUrl: env.RAY_INVENTORY_SITE_URL,
         inventoryProjectDirectory: env.RAY_INVENTORY_PROJECT_DIR,
         inventoryStateDirectory: env.RAY_INVENTORY_STATE_DIR,
         inventoryExcludePackages: (env.RAY_INVENTORY_EXCLUDE_PACKAGES ?? '').split(',').map(value => value.trim()).filter(Boolean),

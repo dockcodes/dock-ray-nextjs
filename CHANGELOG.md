@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+
+- Remove inventory site URL configuration; use the existing environment setting.
+- Separate inventory scheduling by project and normalized environment.
+
 ## 1.1.1
 
 - Reuse Node SDK 1.1 inventory collection, scheduling, locking and secure transport.
