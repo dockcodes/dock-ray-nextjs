@@ -1,8 +1,8 @@
 /**
  * Configuration read once from the environment, plus the process-wide client.
  *
- * Next.js runs several isolated bundles per deployment — the Node server, the
- * edge middleware, each edge route — and each gets its own module instance.
+ * Next.js runs several isolated bundles per deployment - the Node server, the
+ * edge middleware, each edge route - and each gets its own module instance.
  * The singleton is therefore per bundle, not per deployment, which is what we
  * want: an edge bundle must never pull in the Node client.
  */

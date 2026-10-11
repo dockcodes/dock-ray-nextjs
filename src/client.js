@@ -10,7 +10,7 @@ let stop = null;
  *
  * Off unless `NEXT_PUBLIC_RAY_JS_ERRORS` is `true`, because the collector is
  * a decision about visitors' pages, not a default. Errors go to your own
- * route, which forwards them with the project key — a browser cannot hold that
+ * route, which forwards them with the project key - a browser cannot hold that
  * key without publishing it.
  *
  * Mount it once, in the root layout:

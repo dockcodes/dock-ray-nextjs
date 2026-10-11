@@ -1,6 +1,6 @@
 {
   "name": "@dockcodes/dock-ray-next",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Next.js integration for DockRay error and performance monitoring",
   "license": "MIT",
   "author": "Jacek Sultan <j.sultan@dock.codes>",
@@ -25,7 +25,8 @@
   "files": [
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=18"
@@ -43,6 +44,6 @@
     }
   },
   "dependencies": {
-    "@dockcodes/dock-ray": "^1.0.0"
+    "@dockcodes/dock-ray": "^1.1.0"
   }
 }
